@@ -8,8 +8,7 @@ La ESP32-CAM captura una fotografía y la envía mediante WiFi al computador a t
 Luego, Python recibe la imagen y utiliza un modelo YOLO para detectar diferentes objetos.
 
 El proyecto está pensado como una actividad didáctica para alumnos de 4to y 5to de secundaria,
-permitiendo experimentar con IoT, cámaras, Python e i<img width="480" height="320" alt="resultado_20260918_152123_721771" src="https://github.com/user-attachments/assets/3fe8cddc-1701-4b2c-b231-206ad3b16d89" />
-nteligencia artificial.
+permitiendo experimentar con IoT, cámaras, Python e inteligencia artificial.
 
 El modelo puede detectar diferentes objetos cotidianos, no solamente sillas, incluyendo frutas,
 plantas en maceta, botellas, libros, celulares, teclados y otros objetos.
