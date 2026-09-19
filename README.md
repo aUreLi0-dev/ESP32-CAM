@@ -8,7 +8,8 @@ La ESP32-CAM captura una fotografía y la envía mediante WiFi al computador a t
 Luego, Python recibe la imagen y utiliza un modelo YOLO para detectar diferentes objetos.
 
 El proyecto está pensado como una actividad didáctica para alumnos de 4to y 5to de secundaria,
-permitiendo experimentar con IoT, cámaras, Python e inteligencia artificial.
+permitiendo experimentar con IoT, cámaras, Python e i<img width="480" height="320" alt="resultado_20260918_152123_721771" src="https://github.com/user-attachments/assets/3fe8cddc-1701-4b2c-b231-206ad3b16d89" />
+nteligencia artificial.
 
 El modelo puede detectar diferentes objetos cotidianos, no solamente sillas, incluyendo frutas,
 plantas en maceta, botellas, libros, celulares, teclados y otros objetos.
@@ -51,7 +52,7 @@ yolo11l.pt
 
 ## Configuración
 
-Antes de ejecutar el programa, modificar en `inventario.py` la IP de la ESP32-CAM:
+Antes de ejecutar el programa, modificar en `deteccion_es.py` la IP de la ESP32-CAM:
 
 ```python
 ESP32_IP = "192.168.51.164"
@@ -64,7 +65,7 @@ La IP puede variar según la red WiFi. Normalmente puede cambiar el último octe
 Ejecutar:
 
 ```bash
-python inventario.py
+python deteccion_es.py
 ```
 Asegurarse de estar en el directorio en donde se guardó el código .py
 
@@ -97,10 +98,28 @@ Contiene las imágenes después del procesamiento de YOLO, con los objetos detec
 ## Ejemplo
 
 ```text
-Objeto: manzana | Confianza: 92.31%
-Objeto: botella | Confianza: 87.54%
-Objeto: celular | Confianza: 81.20%
+Objeto: silla | Confianza: 81.83%
+Objeto: persona | Confianza: 79.58%
+Objeto: silla | Confianza: 68.52%
+Objeto: persona | Confianza: 64.28%
+Objeto: persona | Confianza: 61.48%
+Objeto: silla | Confianza: 57.75%
+Objeto: silla | Confianza: 52.00%
+Objeto: computadora portátil | Confianza: 50.20%
+Objeto: persona | Confianza: 47.18%
+Objeto: computadora portátil | Confianza: 46.30%
+Objeto: persona | Confianza: 43.30%
+Objeto: persona | Confianza: 42.13%
+Objeto: mesa de comedor | Confianza: 40.40%
+Objeto: computadora portátil | Confianza: 39.25%
+Objeto: computadora portátil | Confianza: 38.03%
+Objeto: persona | Confianza: 33.98%
+Objeto: persona | Confianza: 32.40%
+Objeto: computadora portátil | Confianza: 31.78%
+Objeto: persona | Confianza: 31.02%
+Objeto: persona | Confianza: 30.16%
 ```
+<img width="480" height="320" alt="resultado_20260919_103744_471063" src="https://github.com/user-attachments/assets/bf45aea8-e4de-4960-b297-bafa494c4841" />
 
 ---
 
