@@ -118,8 +118,9 @@ Objeto: computadora portátil | Confianza: 31.78%
 Objeto: persona | Confianza: 31.02%
 Objeto: persona | Confianza: 30.16%
 ```
-<img width="480" height="320" alt="resultado_20260919_103744_471063" src="https://github.com/user-attachments/assets/bf45aea8-e4de-4960-b297-bafa494c4841" />
-
+<p align="center">
+  <img width="480" height="320" alt="resultado_20260919_103744_471063" src="https://github.com/user-attachments/assets/bf45aea8-e4de-4960-b297-bafa494c4841" />
+</p>
 ---
 
 ## Tecnologías
