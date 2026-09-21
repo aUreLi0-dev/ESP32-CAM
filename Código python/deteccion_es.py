@@ -6,11 +6,9 @@ from datetime import datetime
 import os
 
 # ============================================================
-# INVENTARIO CON ESP32-CAM + YOLO
-# Pensado como ejercicio didáctico para alumnos de
-# 4to y 5to de secundaria.
-#
-# La idea es que el alumno pueda ver el flujo completo:
+# DETECCIÓN DE IMÁGENES CON ESP32-CAM + YOLO
+# Pensado como ejercicio didáctico para alumnos.
+# Flujo completo:
 # cámara -> WiFi/HTTP -> Python -> YOLO -> resultado.
 # ============================================================
 
@@ -22,9 +20,7 @@ ESP32_IP = "192.168.51.164"  # CAMBIAR por la IP actual del ESP32-CAM
 URL = f"http://{ESP32_IP}/capture"
 
 # Modelo YOLO preentrenado.
-# Este modelo no está limitado a sillas: trabaja con múltiples
-# objetos cotidianos del conjunto COCO, incluyendo frutas,
-# plantas en maceta y objetos de uso diario.
+
 # También se puede sustituir por un modelo personalizado (.pt).
 MODELO_PATH = "yolo11l.pt"
 modelo = YOLO(MODELO_PATH)
