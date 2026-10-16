@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP32-CAM + YOLO en vivo</title>
+<style>
+  :root {
+    --naranja: #ee7203;
+    --naranja-suave: #fff1e5;
+    --texto: #1d1d1f;
+    --gris: #6b6b70;
+    --borde: #e6e6ea;
+    --fondo: #f6f6f8;
+    --tarjeta: #ffffff;
+    --verde: #1f9d55;
+    --rojo: #d64545;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fondo); color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.45;
+  }
+  header {
+    background: var(--tarjeta); border-bottom: 1px solid var(--borde);
+    padding: 14px 20px; display: flex; align-items: center;
+    justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 1.25rem; }
+  header h1 span { color: var(--naranja); }
+  .estado {
+    display: inline-flex; align-items: center; gap: 8px; font-size: .9rem;
+    padding: 6px 12px; border-radius: 999px; background: var(--fondo);
+  }
+  .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--rojo); }
+  .estado.ok .punto { background: var(--verde); }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; gap: 20px; }
+  .fila { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; }
+  @media (max-width: 860px) { .fila { grid-template-columns: 1fr; } main { padding: 16px; } }
+  .tarjeta {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    border-radius: 14px; padding: 18px;
+  }
+  h2 { margin: 0 0 12px; font-size: 1.05rem; }
+  .video {
+    position: relative; background: #111; border-radius: 10px; overflow: hidden;
+    aspect-ratio: 3 / 2; display: grid; place-items: center;
+  }
+  .video img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .video .aviso {
+    position: absolute; color: #fff; text-align: center; padding: 20px; font-size: .95rem;
+  }
+  .metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .metrica { background: var(--fondo); border-radius: 10px; padding: 10px 12px; }
+  .metrica b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .metrica small { color: var(--gris); font-size: .78rem; }
+  .lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 300px; overflow-y: auto; }
+  .lista li { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+  .lista .nombre { font-weight: 600; text-transform: capitalize; }
+  .lista .nombre small { color: var(--gris); font-weight: 400; text-transform: none; }
+  .lista .pct { font-variant-numeric: tabular-nums; color: var(--gris); font-size: .9rem; }
+  .barra { grid-column: 1 / -1; height: 6px; background: var(--fondo); border-radius: 3px; overflow: hidden; }
+  .barra i { display: block; height: 100%; background: var(--naranja); }
+  .vacio { color: var(--gris); font-size: .92rem; }
+  .control { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--borde); }
+  .control label { display: flex; justify-content: space-between; font-weight: 600; font-size: .95rem; }
+  input[type=range] { width: 100%; accent-color: var(--naranja); margin: 10px 0 4px; }
+  .ayuda { color: var(--gris); font-size: .82rem; margin: 0; }
+  button {
+    font: inherit; font-weight: 600; border: 0; border-radius: 10px; cursor: pointer;
+    padding: 11px 16px; background: var(--naranja); color: #fff; width: 100%; margin-top: 14px;
+  }
+  button.secundario { background: var(--fondo); color: var(--texto); width: auto; margin: 0; padding: 8px 12px; font-size: .85rem; }
+  .mensaje { font-size: .85rem; color: var(--verde); min-height: 1.2em; margin-top: 6px; }
+  .reto-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .reto-cabecera h2 { margin: 0; }
+  .progreso { font-size: .95rem; color: var(--gris); }
+  .progreso b { color: var(--naranja); font-size: 1.2rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: .8rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--borde);
+    background: var(--tarjeta); color: var(--gris); transition: all .2s;
+  }
+  .chip.visto { background: var(--naranja-suave); border-color: var(--naranja); color: var(--texto); }
+  .chip.ahora { background: var(--naranja); border-color: var(--naranja); color: #fff; }
+  .info { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .info .dato { background: var(--fondo); border-radius: 10px; padding: 12px 14px; }
+  .info .dato small { color: var(--gris); display: block; font-size: .78rem; }
+  .info .dato b { font-size: 1rem; }
+  .info p { margin: 0; }
+  a { color: var(--naranja); }
+  .compartir { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .compartir img { width: 130px; height: 130px; border-radius: 8px; border: 1px solid var(--borde); }
+  .url { font-size: 1.3rem; font-weight: 700; word-break: break-all; }
+  footer { text-align: center; color: var(--gris); font-size: .8rem; padding: 10px 20px 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ESP32-CAM + <span>YOLO</span> · Detección en tiempo real</h1>
+  <div class="estado" id="estado"><div class="punto"></div><span id="estado-texto">Conectando…</span></div>
+</header>
+
+<main>
+  <div class="fila">
+    <!-- VIDEO EN VIVO -->
+    <section class="tarjeta">
+      <h2>Lo que ve la cámara</h2>
+      <div class="video">
+        <div class="aviso" id="aviso">Esperando el video de la ESP32-CAM…</div>
+        <img id="video" alt="Video en vivo con detecciones de YOLO">
+      </div>
+      <div class="metricas">
+        <div class="metrica"><b id="total">0</b><small>objetos ahora</small></div>
+        <div class="metrica"><b id="fps">0</b><small>imágenes / segundo</small></div>
+        <div class="metrica"><b id="ms">0</b><small>ms por imagen</small></div>
+      </div>
+    </section>
+
+    <!-- PANEL DE DETECCIONES -->
+    <section class="tarjeta">
+      <h2>YOLO detecta…</h2>
+      <ul class="lista" id="lista"><li class="vacio">Aún no hay objetos. ¡Pon algo frente a la cámara!</li></ul>
+
+      <div class="control">
+        <label for="conf">Confianza mínima <span id="conf-valor">{{ (confianza * 100) | round | int }}%</span></label>
+        <input type="range" id="conf" min="5" max="95" step="5" value="{{ (confianza * 100) | round | int }}">
+        <p class="ayuda">Bájala y YOLO verá más cosas (pero se equivocará más). Súbela y solo mostrará lo que está muy seguro.</p>
+      </div>
+
+      <button id="foto">📸 Guardar foto en la PC</button>
+      <div class="mensaje" id="mensaje"></div>
+    </section>
+  </div>
+
+  <!-- RETO -->
+  <section class="tarjeta">
+    <div class="reto-cabecera">
+      <h2>Reto: ¿cuántos de los 80 objetos puedes hacer que YOLO encuentre?</h2>
+      <div class="progreso"><b id="descubiertos">0</b> / 80 encontrados
+        <button class="secundario" id="reiniciar">Reiniciar</button></div>
+    </div>
+    <div class="chips" id="chips">
+      {% for c in clases %}<span class="chip" data-id="{{ c.id }}">{{ c.nombre }}</span>{% endfor %}
+    </div>
+    <p class="ayuda" style="margin-top:10px">Naranja fuerte = lo está viendo ahora. Naranja claro = ya lo encontraron antes.
+      Estos son <b>todos</b> los objetos que conoce el modelo: si algo no está en la lista, YOLO no lo puede reconocer.</p>
+  </section>
+
+  <!-- INFORMACIÓN DEL MODELO -->
+  <section class="tarjeta">
+    <h2>¿De dónde sale el modelo de YOLO?</h2>
+    <div class="info">
+      <div class="dato"><small>Modelo</small><b>YOLO11n</b> (versión “nano”, la más ligera)</div>
+      <div class="dato"><small>Creado por</small><b>Ultralytics</b> · lanzado en septiembre de 2024</div>
+      <div class="dato"><small>Entrenado con</small><b>COCO</b> · más de 200 000 fotos etiquetadas, 80 tipos de objetos</div>
+      <div class="dato"><small>Tamaño</small><b>2,6 millones</b> de parámetros (~5 MB)</div>
+    </div>
+    <p style="margin-top:14px">
+      Documentación del modelo: <a href="https://docs.ultralytics.com/models/yolo11/" target="_blank" rel="noopener">docs.ultralytics.com/models/yolo11</a><br>
+      Código abierto: <a href="https://github.com/ultralytics/ultralytics" target="_blank" rel="noopener">github.com/ultralytics/ultralytics</a><br>
+      Dataset COCO: <a href="https://cocodataset.org" target="_blank" rel="noopener">cocodataset.org</a><br>
+      Idea original de YOLO (2016): <a href="https://arxiv.org/abs/1506.02640" target="_blank" rel="noopener">Redmon et al., “You Only Look Once”</a>
+    </p>
+  </section>
+
+  {% if compartir %}
+  <!-- COMPARTIR (solo si COMPARTIR_EN_RED = True) -->
+  <section class="tarjeta">
+    <h2>Invita a tus compañeros</h2>
+    <div class="compartir">
+      <img src="/qr.png" alt="Código QR de esta página" onerror="this.style.display='none'">
+      <div>
+        <p class="ayuda" style="margin:0 0 4px">Conéctate a la misma red Wi-Fi y abre:</p>
+        <div class="url">{{ url_pagina }}</div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+</main>
+
+<footer>Taller ULIMA 2026 · Laboratorio de Internet de las Cosas · Ingeniería de Sistemas</footer>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const chips = [...document.querySelectorAll(".chip")];
+
+  async function actualizar() {
+    try {
+      const r = await fetch("/api/estado");
+      const d = await r.json();
+
+      $("estado").classList.toggle("ok", d.conectado);
+      $("estado-texto").textContent = d.conectado ? "Cámara conectada" : "Cámara desconectada";
+      $("total").textContent = d.total;
+      $("fps").textContent = d.fps;
+      $("ms").textContent = d.tiempo_ms;
+      $("descubiertos").textContent = d.descubiertos.length;
+
+      const lista = $("lista");
+      if (d.detecciones.length === 0) {
+        lista.innerHTML = '<li class="vacio">Aún no hay objetos. ¡Pon algo frente a la cámara!</li>';
+      } else {
+        lista.innerHTML = d.detecciones.map(o => {
+          const p = Math.round(o.confianza * 100);
+          return `<li><span class="nombre">${o.nombre} <small>(${o.nombre_en})</small></span>
+                  <span class="pct">${p}%</span><span class="barra"><i style="width:${p}%"></i></span></li>`;
+        }).join("");
+      }
+
+      const ahora = new Set(d.detecciones.map(o => o.clase));
+      const vistos = new Set(d.descubiertos);
+      chips.forEach(c => {
+        const id = Number(c.dataset.id);
+        c.classList.toggle("ahora", ahora.has(id));
+        c.classList.toggle("visto", vistos.has(id) && !ahora.has(id));
+      });
+    } catch (e) {
+      $("estado").classList.remove("ok");
+      $("estado-texto").textContent = "Sin conexión con el servidor";
+    }
+  }
+  setInterval(actualizar, 400);
+  actualizar();
+
+  // Slider de confianza
+  const conf = $("conf");
+  conf.addEventListener("input", () => $("conf-valor").textContent = conf.value + "%");
+  conf.addEventListener("change", () => fetch("/api/confianza", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ confianza: conf.value / 100 })
+  }));
+
+  // Guardar foto
+  $("foto").addEventListener("click", async () => {
+    const r = await fetch("/api/foto", { method: "POST" });
+    const d = await r.json();
+    $("mensaje").textContent = d.mensaje;
+    setTimeout(() => $("mensaje").textContent = "", 3000);
+  });
+
+  $("reiniciar").addEventListener("click", () => fetch("/api/reiniciar_reto", { method: "POST" }));
+
+  // Si el video se corta, reintentar
+  // Video: pedimos una imagen nueva apenas termina de cargar la anterior.
+  // (Funciona en cualquier navegador, también en localhost con antivirus.)
+  function siguienteImagen() {
+    const img = new Image();
+    img.onload = () => {
+      $("video").src = img.src;
+      $("aviso").style.display = "none";
+      setTimeout(siguienteImagen, 30);
+    };
+    img.onerror = () => setTimeout(siguienteImagen, 500);
+    img.src = "/imagen.jpg?t=" + Date.now();
+  }
+  siguienteImagen();
+</script>
+</body>
+</html>
